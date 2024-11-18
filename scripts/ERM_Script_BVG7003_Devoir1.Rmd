@@ -1,0 +1,96 @@
+---
+title: "BVG7003Devoir1"
+author: "EdouardRM"
+date: "2024-11-01"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Installer et charger les bibliothèques nécessaires
+
+```{r, results = 'hide', message = FALSE}
+install.packages(c("ggplot2","dplyr","tidyr"))
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+```
+
+# Charger le fichier de données à partir de son emplacement sur votre ordinateur
+
+```{r}
+data <- read.csv("/Users/edouard/Downloads/2_Data_RNASeq_Cannabis_Sex.csv", row.names = 1) 
+# Ajustez ici votre chemin vers votre fichier
+```
+
+# Extraire les informations sur le sexe des plantes
+
+```{r}
+sex_info <- colnames(data)
+sex_info <- gsub(".*_(XX|XY)$", "\\1", sex_info) 
+# Dans le cas ici le sexe est indiqué en suffixe après un underscore et avec les deux options XX et XY. Si une autre information pertinente pour l'analyse était indiquée dans le nom de colonne aussi en suffixe, vous pourriez ajuster cette section-ci en remplaçant XX|XY par les options appropriées.
+```
+
+# Ajouter les informations sur le sexe aux données
+
+```{r}
+data <- t(data)
+data <- as.data.frame(data)
+data$Sex <- sex_info 
+# Si d'autres informations que le sexe étaient fournies dans les noms de colonnes, il pourrait être approprié de changer en conséquence le nom de la variable et de faire suivre le changement dans la suite du script, mais autrement le nom de la variable en tant que tel n'affectera pas l'analyse.
+```
+
+# Isoler les données d'expression pour les gènes REM16 et FT1
+
+```{r}
+REM16_data <- data %>% select(REM16 = LOC115699937, Sex) 
+FT1_data <- data %>% select(FT1 = LOC115696989, Sex)
+# Si d'autres loci devenaient d'intérêt à être analysés, modifier les noms et les numéros de locus ici de manière appropriée. Même chose pour la variable servant de comparaison (ici Sex).
+```
+
+# Créer les graphiques
+## Graphique pour REM16
+
+```{r}
+ggplot(REM16_data, aes(x = Sex, y = REM16, fill = Sex)) +
+  geom_boxplot() +
+  labs(title = "Expression de REM16 par sexe", x = "Sexe", y = "Expression de REM16") +
+  theme_minimal()
+```
+
+
+```{r, message = FALSE}
+ggsave("REM16_expression_by_sex.jpeg") ## Sauvegarder le graphique
+```
+
+## Graphique pour FT1
+
+```{r}
+ggplot(FT1_data, aes(x = Sex, y = FT1, fill = Sex)) +
+  geom_boxplot() +
+  labs(title = "Expression de FT1 par sexe", x = "Sexe", y = "Expression de FT1") +
+  theme_minimal()
+```
+
+```{r, message = FALSE}
+ggsave("FT1_expression_by_sex.jpeg") ## Sauvegarder le graphique
+```
+
+## Graphique combiné pour REM16 et FT1
+
+```{r}
+combined_data <- data %>% select(REM16 = LOC115699937, FT1 = LOC115696989, Sex)
+combined_data <- gather(combined_data, key = "Gene", value = "Expression", -Sex)
+
+ggplot(combined_data, aes(x = Sex, y = Expression, fill = Gene)) +
+  geom_boxplot(position = position_dodge(width = 0.75)) +
+  labs(title = "Expression de REM16 et FT1 par sexe", x = "Sexe", y = "Expression") +
+  theme_minimal()
+```
+
+```{r, message = FALSE}
+ggsave("Combined_expression_by_sex.jpeg") ## Sauvegarder le graphique
+```
+
